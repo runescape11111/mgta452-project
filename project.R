@@ -32,3 +32,9 @@ levels(gdp_long$series)
 gdp_long$year <- as.numeric(gdp_long$year)
 gdp_long$value <- as.numeric(gdp_long$value)
 gdp_long[complete.cases(gdp_long),]
+
+try <- results %>%
+  inner_join(hosts[,c("game_slug","game_year")], by = c("slug_game"="game_slug")) %>%
+  drop_na(medal_type) %>%
+  select(-c(athletes, rank_equal, country_name, athlete_url, athlete_full_name, value_unit, value_type, rank_position))
+
