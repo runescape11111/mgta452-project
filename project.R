@@ -1,11 +1,20 @@
 library(tidyverse)
+library(forcats)
 
 athletes <- read_csv("olympic_athletes.csv")
 hosts <- read_csv("olympic_hosts.csv")
 medals <- read_csv("olympic_medals.csv")
+
 results <- read_csv("olympic_results.csv")
+results$medal_type <- fct_relevel(as.factor(results$medal_type), c('GOLD','SILVER', 'BRONZE'))
 
+# summarize medal counts by country
+medals_by_country <- results[complete.cases(results$medal_type),] %>%
+  group_by(country_3_letter_code, medal_type) %>%
+  summarize(sum = n())
+medals_by_country
 
+# gdp clean up
 gdp <- read_csv("GDP.csv")
 gdp[gdp == '..'] <- NA
 colnames(gdp) <- c('name','code','series','series_code','1960',
