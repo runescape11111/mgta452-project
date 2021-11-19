@@ -73,3 +73,14 @@ try <- results %>%
   select(-c(athletes, rank_equal, country_name, athlete_url, athlete_full_name, value_unit, value_type, rank_position))
 
 # gdp_long[gdp_long$code == "RUS",] %>% .[complete.cases(.),]
+
+# curing data for # of participation by country
+event_participation <- results %>%
+  group_by(slug_game, country_name) %>%
+  summarize(competed_in = n()) %>%
+  inner_join(hosts[,c(1,7)], by = c(slug_game = 'game_slug')) %>%
+  arrange(country_name, game_year)
+
+event_participation$slug_game <- as.factor(event_participation$slug_game)
+event_participation$country_name <- as.factor(event_participation$country_name)
+
