@@ -1,6 +1,21 @@
 library(tidyverse)
 library(forcats)
 
+library(rvest)
+
+url <- 'https://en.wikipedia.org/wiki/List_of_participating_nations_at_the_Summer_Olympic_Games'
+
+# scraping on wikipedia for attendance
+attendance_data <- url %>%
+  read_html() %>%
+  html_nodes(xpath='//*[@id="mw-content-text"]/div[1]/table[3]') %>%
+  html_table()
+attendance_processing <- attendance_data[[1]]
+attendance <- attendance_processing[,c('A','Code','Total')]
+attendance[attendance == 'Soviet Union [^]'] <- 'Soviet Union'
+colnames(attendance) <- c('country_name','code', 'attendances')
+attendance$attendances <- as.numeric(attendance$attendances)
+
 athletes <- read_csv("olympic_athletes.csv")
 hosts <- read_csv("olympic_hosts.csv")
 medals <- read_csv("olympic_medals.csv")
@@ -11,10 +26,29 @@ results$medal_type <- fct_relevel(as.factor(results$medal_type), c('GOLD','SILVE
 # summarize medal counts by country
 medals_by_country <- results[complete.cases(results$medal_type),] %>%
   group_by(country_3_letter_code, medal_type) %>%
-  summarize(total_each = n())
-
+  summarize(total_each = n()) %>% 
+  pivot_wider(names_from = medal_type, values_from = total_each) %>%
+  replace_na(list(GOLD = 0, SILVER = 0, BRONZE = 0)) %>%
+  mutate(total = BRONZE + SILVER + GOLD) %>%
+  arrange(desc(total)) %>%
+  pivot_longer(cols = c(GOLD, SILVER, BRONZE), names_to = "medal_type", values_to = "count_by_medal") %>%
+  inner_join(attendance, by = c(country_3_letter_code = 'code')) %>%
+  mutate(medals_per_attendance = count_by_medal / attendances) %>%
+  group_by(country_3_letter_code) %>%
+  mutate(total_per_attendance = sum(medals_per_attendance))
+  
 medals_by_country
-ggplot(medals_by_country, aes(country_3_letter_code, total_each, color = medal_type)) + geom_bar(stat='identity')
+
+ggplot(medals_by_country[1:30,], aes(reorder(country_3_letter_code, -total), count_by_medal, fill = medal_type)) +
+  geom_bar( stat='identity') +
+  scale_fill_manual("legend", values = c("GOLD" = "yellow", "SILVER" = "gray", "BRONZE" = "brown"))
+
+# plotting for medal counts per attendance
+ggplot(medals_by_country[1:30,], aes(reorder(country_3_letter_code, -total_per_attendance), medals_per_attendance, fill = medal_type)) +
+  geom_bar( stat='identity') +
+  scale_fill_manual("legend", values = c("GOLD" = "yellow", "SILVER" = "gray", "BRONZE" = "brown")) +
+  geom_text(aes(label = signif(medals_per_attendance, digits = 3)), size = 3, position = position_stack(vjust = 0.5)) +
+  geom_text(aes(country_3_letter_code, signif(total_per_attendance, digits = 3), label = signif(total_per_attendance, digits = 3), vjust = -0.25, group = country_3_letter_code))
 
 # gdp clean up
 gdp <- read_csv("GDP.csv")
@@ -38,3 +72,4 @@ try <- results %>%
   drop_na(medal_type) %>%
   select(-c(athletes, rank_equal, country_name, athlete_url, athlete_full_name, value_unit, value_type, rank_position))
 
+# gdp_long[gdp_long$code == "RUS",] %>% .[complete.cases(.),]
