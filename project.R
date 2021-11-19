@@ -11,8 +11,10 @@ results$medal_type <- fct_relevel(as.factor(results$medal_type), c('GOLD','SILVE
 # summarize medal counts by country
 medals_by_country <- results[complete.cases(results$medal_type),] %>%
   group_by(country_3_letter_code, medal_type) %>%
-  summarize(sum = n())
+  summarize(total_each = n())
+
 medals_by_country
+ggplot(medals_by_country, aes(country_3_letter_code, total_each, color = medal_type)) + geom_bar(stat='identity')
 
 # gdp clean up
 gdp <- read_csv("GDP.csv")
@@ -24,10 +26,8 @@ colnames(gdp) <- c('name','code','series','series_code','1960',
                    '1992','1994','1996','1998','2000',
                    '2002','2004','2006','2008','2010',
                    '2012','2014','2016','2018','2020')
-gdp_long <- pivot_longer(gdp, cols= starts_with(c('1','2')), names_to = 'year', values_to = 'value')
-
-gdp_long$series <- as.factor(gdp_long$series)
-levels(gdp_long$series)
+gdp_long <- pivot_longer(gdp, cols= starts_with(c('1','2')), names_to = 'year', values_to = 'gdp_per_capita') %>%
+  select(-c(series,series_code))
 
 gdp_long$year <- as.numeric(gdp_long$year)
 gdp_long$value <- as.numeric(gdp_long$value)
