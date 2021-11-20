@@ -51,21 +51,21 @@ ggplot(medals_by_country[1:30,], aes(reorder(country_3_letter_code, -total_per_a
   geom_text(aes(country_3_letter_code, signif(total_per_attendance, digits = 3), label = signif(total_per_attendance, digits = 3), vjust = -0.25, group = country_3_letter_code))
 
 # gdp clean up
-gdp <- read_csv("GDP.csv")
-gdp[gdp == '..'] <- NA
-colnames(gdp) <- c('name','code','series','series_code','1960',
+gdp_per <- read_csv("GDP_per_capita.csv")
+gdp_per[gdp_per == '..'] <- NA
+colnames(gdp_per) <- c('name','code','series','series_code','1960',
                    '1962','1964','1966','1968','1970',
                    '1972','1974','1976','1978','1980',
                    '1982','1984','1986','1988','1990',
                    '1992','1994','1996','1998','2000',
                    '2002','2004','2006','2008','2010',
                    '2012','2014','2016','2018','2020')
-gdp_long <- pivot_longer(gdp, cols= starts_with(c('1','2')), names_to = 'year', values_to = 'gdp_per_capita') %>%
+gdp_per_long <- pivot_longer(gdp_per, cols= starts_with(c('1','2')), names_to = 'year', values_to = 'gdp_per_capita') %>%
   select(-c(series,series_code))
 
-gdp_long$year <- as.numeric(gdp_long$year)
-gdp_long$value <- as.numeric(gdp_long$value)
-gdp_long <- gdp_long %>%
+gdp_per_long$year <- as.numeric(gdp_long$year)
+gdp_per_long$value <- as.numeric(gdp_long$value)
+gdpper__long <- gdp_per_long %>%
   replace_na(list(gdp_per_capita = 0))
 
 # gdp_long[gdp_long$code == "RUS",] %>% .[complete.cases(.),]
