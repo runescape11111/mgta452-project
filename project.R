@@ -115,6 +115,13 @@ ggplot(medals_by_country_event_total, aes(competed_in, total, label = country_3_
   scale_color_manual("legend", values = c("summer" = "red", "winter" = "blue"))
 dev.off()
 
+png(filename="participation_vs_log_won.png", width=5000, height=5000)
+ggplot(medals_by_country_event_total, aes(competed_in, log(total), label = country_3_letter_code, color = season)) +
+  geom_label(aes(size = 10 * total)) +
+  facet_wrap(~game_year, scales = 'free') +
+  scale_color_manual("legend", values = c("summer" = "red", "winter" = "blue"))
+dev.off()
+
 
 
 
