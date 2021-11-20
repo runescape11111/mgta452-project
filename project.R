@@ -64,9 +64,20 @@ gdp_per_long <- pivot_longer(gdp_per, cols= starts_with(c('1','2')), names_to = 
   select(-c(series,series_code))
 
 gdp_per_long$year <- as.numeric(gdp_long$year)
-gdp_per_long$value <- as.numeric(gdp_long$value)
-gdpper__long <- gdp_per_long %>%
+gdp_per_long$gdp_per_capita <- as.numeric(gdp_long$gdp_per_capita)
+gdp_per_long <- gdp_per_long %>%
   replace_na(list(gdp_per_capita = 0))
+
+gdp_tot <- read_csv("GDP.csv")
+gdp_tot[gdp_tot == '..'] <- NA
+gdp_tot <- gdp_tot[,1:65]
+gdp_tot_long <- pivot_longer(gdp_tot, cols= starts_with(c('1','2')), names_to = 'year', values_to = 'gdp_total') %>%
+  select(-c('Indicator Name','Indicator Code'))
+colnames(gdp_tot_long) <- c('name', 'code', 'year', 'gdp_total')
+gdp_tot_long$year <- as.numeric(gdp_tot_long$year)
+gdp_tot_long <- gdp_tot_long %>%
+  replace_na(list(gdp_total = 0))
+
 
 # gdp_long[gdp_long$code == "RUS",] %>% .[complete.cases(.),]
 
@@ -109,9 +120,15 @@ dev.off()
 
 
 joined_for_predict <- medals_by_country_event_total %>%
-  inner_join(gdp_long, by = c('country_3_letter_code' = 'code', 'game_year' = 'year')) %>%
+  inner_join(gdp_per_long, by = c('country_3_letter_code' = 'code', 'game_year' = 'year')) %>%
   mutate(gdp_per_capita = as.numeric(gdp_per_capita)) %>%
   filter(gdp_per_capita != 0) %>%
-  mutate(medals_per_gdp_capita = total / gdp_per_capita)
+  inner_join(gdp_tot_long, by = c('country_3_letter_code' = 'code', 'game_year' = 'year', 'name' = 'name')) %>%
+  mutate(population = floor(gdp_total / gdp_per_capita))
 
-ggplot(joined_for_predict, aes(gdp_per_capita, total)) + geom_point()
+ggplot(joined_for_predict, aes(gdp_per_capita, total, label = country_3_letter_code)) +
+  geom_label()
+ggplot(joined_for_predict, aes(gdp_total, total, label = country_3_letter_code)) +
+  geom_label()
+ggplot(joined_for_predict, aes(population, total, label = country_3_letter_code)) +
+  geom_label()
