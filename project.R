@@ -65,22 +65,53 @@ gdp_long <- pivot_longer(gdp, cols= starts_with(c('1','2')), names_to = 'year', 
 
 gdp_long$year <- as.numeric(gdp_long$year)
 gdp_long$value <- as.numeric(gdp_long$value)
-gdp_long[complete.cases(gdp_long),]
-
-try <- results %>%
-  inner_join(hosts[,c("game_slug","game_year")], by = c("slug_game"="game_slug")) %>%
-  drop_na(medal_type) %>%
-  select(-c(athletes, rank_equal, country_name, athlete_url, athlete_full_name, value_unit, value_type, rank_position))
+gdp_long <- gdp_long %>%
+  replace_na(list(gdp_per_capita = 0))
 
 # gdp_long[gdp_long$code == "RUS",] %>% .[complete.cases(.),]
 
 # curing data for # of participation by country
 event_participation <- results %>%
-  group_by(slug_game, country_name) %>%
+  group_by(slug_game, country_3_letter_code, .drop = FALSE) %>%
   summarize(competed_in = n()) %>%
-  inner_join(hosts[,c(1,7)], by = c(slug_game = 'game_slug')) %>%
-  arrange(country_name, game_year)
+  right_join(hosts[,c(1,7)], by = c(slug_game = 'game_slug')) %>%
+  arrange(country_3_letter_code, game_year)
 
 event_participation$slug_game <- as.factor(event_participation$slug_game)
 event_participation$country_name <- as.factor(event_participation$country_name)
 
+medals_by_country_event <- results %>%
+  group_by(country_3_letter_code, slug_game, medal_type) %>%
+  summarize(won = sum(!is.na(medal_type))) %>%
+  drop_na() %>%
+  #expand(country_3_letter_code, slug_game, medal_type) %>%
+  #select(-c(country_code, discipline_title, event_title, participant_type, athletes, rank_equal, rank_position, athlete_url, athlete_full_name, value_unit, value_type)) %>%
+  right_join(event_participation, by = c("slug_game", "country_3_letter_code")) %>%
+  arrange(country_3_letter_code, game_year, medal_type) %>%
+  replace_na(list(bronze_won = 0, silver_won = 0, gold_won = 0))
+
+medals_by_country_event_total <- medals_by_country_event %>%
+  group_by(country_3_letter_code, game_year, competed_in) %>%
+  summarize(total = sum(won)) %>%
+  replace_na(list(total = 0)) %>%
+  mutate(season = if_else(game_year %% 4 == 0, "summer", "winter"))
+
+# plot for participation vs won titles
+png(filename="participation_vs_won.png", width=5000, height=5000)
+ggplot(medals_by_country_event_total, aes(competed_in, total, label = country_3_letter_code, color = season)) +
+  geom_label(aes(size = 10 * total)) +
+  facet_wrap(~game_year, scales = 'free') +
+  scale_color_manual("legend", values = c("summer" = "red", "winter" = "blue"))
+dev.off()
+
+
+
+
+
+joined_for_predict <- medals_by_country_event_total %>%
+  inner_join(gdp_long, by = c('country_3_letter_code' = 'code', 'game_year' = 'year')) %>%
+  mutate(gdp_per_capita = as.numeric(gdp_per_capita)) %>%
+  filter(gdp_per_capita != 0) %>%
+  mutate(medals_per_gdp_capita = total / gdp_per_capita)
+
+ggplot(joined_for_predict, aes(gdp_per_capita, total)) + geom_point()
