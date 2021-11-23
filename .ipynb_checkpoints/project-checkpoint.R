@@ -177,7 +177,7 @@ joined_for_predict <- medals_by_country_event_total %>%
   inner_join(military, by = c('country_3_letter_code' = 'code', 'game_year' = 'year', 'name' = 'name')) %>%
   mutate(military_total = military_percent_gdp / 100 * gdp_total)
 
-check <- joined_for_predict[joined_for_predict$country_name != joined_for_predict$name,]
+#check <- joined_for_predict[joined_for_predict$country_name != joined_for_predict$name,]
 
 ggplot(joined_for_predict, aes(gdp_per_capita, total, label = country_3_letter_code)) +
   geom_label()
@@ -195,17 +195,3 @@ ggplot(joined_for_predict, aes(military_percent_gdp, total, label = country_3_le
   geom_label()
 ggplot(joined_for_predict, aes(military_total, total, label = country_3_letter_code, fill = game_season)) +
   geom_label()
-
-joined_for_predict <- joined_for_predict %>%
-  mutate(country_3_letter_code = as.factor(country_3_letter_code),
-         game_year = as.factor(game_year),
-         game_season = as.factor(game_season)
-         )
-
-set.seed(101)
-sample <- sample.int(n = nrow(joined_for_predict), size = floor(.75*nrow(joined_for_predict)), replace = F)
-train <- joined_for_predict[sample, ]
-valid  <- joined_for_predict[-sample, ]
-
-write_csv(train,'train.csv')
-write_csv(valid,'valid.csv')
