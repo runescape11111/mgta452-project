@@ -131,7 +131,7 @@ medals_by_country_event <- results %>%
 
 medals_by_country_event_total <- medals_by_country_event %>%
   group_by(country_3_letter_code, country_name, game_year, game_season, game_location) %>%
-  summarize(total = sum(won), host = host, slug_game = slug_game) %>%
+  summarize(total = sum(won), host = host, slug_game = slug_game, competed_in = competed_in) %>%
   replace_na(list(total = 0)) %>%
   distinct()
 
