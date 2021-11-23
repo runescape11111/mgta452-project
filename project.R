@@ -101,7 +101,10 @@ event_participation <- results %>%
   summarize(competed_in = n()) %>%
   right_join(hosts[,c(1,4,6,7)], by = c(slug_game = 'game_slug')) %>%
   arrange(country_3_letter_code, game_year)
+
 event_participation$game_location[event_participation$game_location == "Australia, Sweden"] <- "Australia"
+event_participation$country_3_letter_code[event_participation$country_3_letter_code == "BRN"] <- "BHR"
+event_participation$country_3_letter_code[event_participation$country_3_letter_code == "BRU"] <- "BRN"
 
 event_participation$slug_game <- as.factor(event_participation$slug_game)
 event_participation$country_3_letter_code <- as.factor(event_participation$country_3_letter_code)
@@ -110,11 +113,11 @@ event_participation$game_location[event_participation$game_location == "China"] 
 event_participation$game_location[event_participation$game_location == "United States"] <- "United States of America"
 event_participation$game_location[event_participation$game_location == "USSR"] <- "Soviet Union"
 
-country_list <- as.factor(event_participation$country_name)
-levels(country_list)
+#country_list <- as.factor(event_participation$country_name)
+#levels(country_list)
 
-host_list <- as.factor(event_participation$game_location)
-levels(host_list)
+#host_list <- as.factor(event_participation$game_location)
+#levels(host_list)
 
 event_participation <- event_participation %>%
   mutate(host = if_else(game_location == country_name, "Y", "N")) %>%
@@ -162,9 +165,16 @@ joined_for_predict <- medals_by_country_event_total %>%
   inner_join(gdp_tot_long, by = c('country_3_letter_code' = 'code', 'game_year' = 'year', 'name' = 'name')) %>%
   mutate(population = floor(gdp_total / gdp_per_capita))
 
+#check <- joined_for_predict[joined_for_predict$country_name != joined_for_predict$name,]
+
 ggplot(joined_for_predict, aes(gdp_per_capita, total, label = country_3_letter_code)) +
   geom_label()
 ggplot(joined_for_predict, aes(gdp_total, total, label = country_3_letter_code)) +
   geom_label()
 ggplot(joined_for_predict, aes(population, total, label = country_3_letter_code)) +
+  geom_label()
+ggplot(joined_for_predict, aes(total, label = country_3_letter_code)) +
+  geom_bar() +
+  facet_wrap(~host, scales = 'free')
+ggplot(joined_for_predict, aes(competed_in, total, label = country_3_letter_code)) +
   geom_label()
