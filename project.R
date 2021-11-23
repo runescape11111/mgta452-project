@@ -32,6 +32,7 @@ medals_by_country <- results[complete.cases(results$medal_type),] %>%
   mutate(total = BRONZE + SILVER + GOLD) %>%
   arrange(desc(total)) %>%
   pivot_longer(cols = c(GOLD, SILVER, BRONZE), names_to = "medal_type", values_to = "count_by_medal") %>%
+  mutate(medal_type = fct_relevel(as.factor(medal_type), c('GOLD','SILVER', 'BRONZE'))) %>%
   inner_join(attendance, by = c(country_3_letter_code = 'code')) %>%
   mutate(medals_per_attendance = count_by_medal / attendances) %>%
   group_by(country_3_letter_code) %>%
@@ -41,14 +42,27 @@ medals_by_country
 
 ggplot(medals_by_country[1:30,], aes(reorder(country_3_letter_code, -total), count_by_medal, fill = medal_type)) +
   geom_bar( stat='identity') +
-  scale_fill_manual("legend", values = c("GOLD" = "yellow", "SILVER" = "gray", "BRONZE" = "brown"))
+  scale_fill_manual("legend", values = c("GOLD" = "gold2", "SILVER" = "gray", "BRONZE" = "brown")) +
+  geom_text(aes(label = signif(count_by_medal, digits = 3)), size = 3, position = position_stack(vjust = 0.5)) +
+  geom_text(aes(country_3_letter_code,
+                signif(total, digits = 3),
+                label = signif(total, digits = 3),
+                vjust = -0.25,
+                group = country_3_letter_code))
 
 # plotting for medal counts per attendance
-ggplot(medals_by_country[1:30,], aes(reorder(country_3_letter_code, -total_per_attendance), medals_per_attendance, fill = medal_type)) +
+medals_by_country_attendance <- medals_by_country %>%
+  arrange(desc(total_per_attendance))
+
+ggplot(medals_by_country_attendance[c(1:15, 22:36),], aes(reorder(country_3_letter_code, -total_per_attendance), medals_per_attendance, fill = medal_type)) +
   geom_bar( stat='identity') +
-  scale_fill_manual("legend", values = c("GOLD" = "yellow", "SILVER" = "gray", "BRONZE" = "brown")) +
+  scale_fill_manual("legend", values = c("GOLD" = "gold2", "SILVER" = "gray", "BRONZE" = "brown")) +
   geom_text(aes(label = signif(medals_per_attendance, digits = 3)), size = 3, position = position_stack(vjust = 0.5)) +
-  geom_text(aes(country_3_letter_code, signif(total_per_attendance, digits = 3), label = signif(total_per_attendance, digits = 3), vjust = -0.25, group = country_3_letter_code))
+  geom_text(aes(country_3_letter_code,
+                signif(total_per_attendance, digits = 3),
+                label = signif(total_per_attendance, digits = 3),
+                vjust = -0.25,
+                group = country_3_letter_code))
 
 # gdp clean up
 gdp_per <- read_csv("GDP_per_capita.csv")
@@ -63,8 +77,8 @@ colnames(gdp_per) <- c('name','code','series','series_code','1960',
 gdp_per_long <- pivot_longer(gdp_per, cols= starts_with(c('1','2')), names_to = 'year', values_to = 'gdp_per_capita') %>%
   select(-c(series,series_code))
 
-gdp_per_long$year <- as.numeric(gdp_long$year)
-gdp_per_long$gdp_per_capita <- as.numeric(gdp_long$gdp_per_capita)
+gdp_per_long$year <- as.numeric(gdp_per_long$year)
+gdp_per_long$gdp_per_capita <- as.numeric(gdp_per_long$gdp_per_capita)
 gdp_per_long <- gdp_per_long %>%
   replace_na(list(gdp_per_capita = 0))
 
@@ -83,48 +97,63 @@ gdp_tot_long <- gdp_tot_long %>%
 
 # curing data for # of participation by country
 event_participation <- results %>%
-  group_by(slug_game, country_3_letter_code, .drop = FALSE) %>%
+  group_by(slug_game, country_3_letter_code, country_name, .drop = FALSE) %>%
   summarize(competed_in = n()) %>%
-  right_join(hosts[,c(1,7)], by = c(slug_game = 'game_slug')) %>%
+  right_join(hosts[,c(1,4,6,7)], by = c(slug_game = 'game_slug')) %>%
   arrange(country_3_letter_code, game_year)
+event_participation$game_location[event_participation$game_location == "Australia, Sweden"] <- "Australia"
 
 event_participation$slug_game <- as.factor(event_participation$slug_game)
-event_participation$country_name <- as.factor(event_participation$country_name)
+event_participation$country_3_letter_code <- as.factor(event_participation$country_3_letter_code)
+
+event_participation$game_location[event_participation$game_location == "China"] <- "People's Republic of China"
+event_participation$game_location[event_participation$game_location == "United States"] <- "United States of America"
+event_participation$game_location[event_participation$game_location == "USSR"] <- "Soviet Union"
+
+country_list <- as.factor(event_participation$country_name)
+levels(country_list)
+
+host_list <- as.factor(event_participation$game_location)
+levels(host_list)
+
+event_participation <- event_participation %>%
+  mutate(host = if_else(game_location == country_name, "Y", "N")) %>%
+  mutate(host = as.factor(host))
 
 medals_by_country_event <- results %>%
   group_by(country_3_letter_code, slug_game, medal_type) %>%
   summarize(won = sum(!is.na(medal_type))) %>%
   drop_na() %>%
-  #expand(country_3_letter_code, slug_game, medal_type) %>%
-  #select(-c(country_code, discipline_title, event_title, participant_type, athletes, rank_equal, rank_position, athlete_url, athlete_full_name, value_unit, value_type)) %>%
   right_join(event_participation, by = c("slug_game", "country_3_letter_code")) %>%
   arrange(country_3_letter_code, game_year, medal_type) %>%
-  replace_na(list(bronze_won = 0, silver_won = 0, gold_won = 0))
+  replace_na(list(bronze_won = 0, silver_won = 0, gold_won = 0)) %>%
+  inner_join(hosts[,c("game_season", "game_year", "game_slug")], by = c("slug_game" = "game_slug", "game_year", "game_season"))
 
 medals_by_country_event_total <- medals_by_country_event %>%
-  group_by(country_3_letter_code, game_year, competed_in) %>%
-  summarize(total = sum(won)) %>%
+  group_by(country_3_letter_code, country_name, game_year, game_season, game_location) %>%
+  summarize(total = sum(won), host = host, slug_game = slug_game) %>%
   replace_na(list(total = 0)) %>%
-  mutate(season = if_else(game_year %% 4 == 0, "summer", "winter"))
+  distinct()
 
 # plot for participation vs won titles
 png(filename="participation_vs_won.png", width=5000, height=5000)
-ggplot(medals_by_country_event_total, aes(competed_in, total, label = country_3_letter_code, color = season)) +
-  geom_label(aes(size = 10 * total)) +
-  facet_wrap(~game_year, scales = 'free') +
-  scale_color_manual("legend", values = c("summer" = "red", "winter" = "blue"))
+ggplot(medals_by_country_event_total, aes(competed_in, total, label = country_3_letter_code, color = game_season)) +
+  geom_label(aes(size = 10)) +
+  facet_wrap(~game_year + game_season, scales = 'free') +
+  scale_color_manual("legend", values = c("Summer" = "red", "Winter" = "blue"))
 dev.off()
 
 png(filename="participation_vs_log_won.png", width=5000, height=5000)
-ggplot(medals_by_country_event_total, aes(competed_in, log(total), label = country_3_letter_code, color = season)) +
-  geom_label(aes(size = 10 * total)) +
+ggplot(medals_by_country_event_total, aes(log(competed_in), log(total), label = country_3_letter_code, color = season)) +
+  geom_label(aes(size = 10)) +
   facet_wrap(~game_year, scales = 'free') +
   scale_color_manual("legend", values = c("summer" = "red", "winter" = "blue"))
 dev.off()
 
-
-
-
+ggplot(medals_by_country_event_total[medals_by_country_event_total$country_3_letter_code == 'CHN',]) +
+  geom_point(aes(game_year, total, color = host)) +
+  facet_wrap(~game_season, scales = 'free') +
+  scale_color_manual("legend", values = c("Y" = "green", "N" = "red"))
 
 joined_for_predict <- medals_by_country_event_total %>%
   inner_join(gdp_per_long, by = c('country_3_letter_code' = 'code', 'game_year' = 'year')) %>%
