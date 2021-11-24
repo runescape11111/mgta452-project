@@ -1,0 +1,81 @@
+from,to,name
+DZA,ALG,Algeria
+AGO,ANG,Angola
+ATG,ANT,Antigua and Barbuda
+ABW,ARU,Aruba
+ASM,ASA,American Samoa
+BHS,BAH,Bahamas
+BGD,BAN,Bangladesh
+BRB,BAR,Barbados
+BMU,BER,Bermuda
+BTN,BHU,Bhutan
+BLZ,BIZ,Belize
+BWA,BOT,Botswana
+BGR,BUL,Bulgaria
+BFA,BUR,Burkina Faso
+KHM,CAM,Cambodia
+CYM,CAY,Cayman Islands
+COG,CGO,Congo
+TCD,CHA,Chad
+CRI,CRC,Costa Rica
+HRV,CRO,Croatia
+DNK,DEN,Denmark
+SLV,ESA,El Salvador
+FJI,FIJ,Fiji
+GMB,GAM,Gambia
+GNB,GBS,Guinea-Bissau
+GNQ,GEQ,Equatorial Guinea
+DEU,GER,Germany
+GRC,GRE,Greece
+GRD,GRN,Grenada
+GTM,GUA,Guatemala
+GIN,GUI,Guinea
+HTI,HAI,Haiti
+HND,HON,Honduras
+IDN,INA,Indonesia
+IRN,IRI,Iran
+VIR,ISV,US Virgin Islands
+VGB,IVB,British Virgin Islands
+XKX,KOS,Kosovo
+SAU,KSA,Saudi Arabia
+KWT,KUW,Kuwait
+LVA,LAT,Latvia
+LBY,LBA,Libya
+LSO,LES,Lesotho
+MDG,MAD,Madagascar
+MYS,MAS,Malaysia
+MWI,MAW,Malawi
+MNG,MGL,Mongolia
+MCO,MON,Monaco
+MUS,MRI,Mauritius
+MRT,MTN,Mauritania
+MMR,MYA,Myanmar
+NIC,NCA,Nicaragua
+NLD,NED,Netherlands
+NPL,NEP,Nepal
+NGA,NGR,Nigeria
+NER,NIG,Niger
+OMN,OMA,Oman
+PRY,PAR,Paraguay
+PHL,PHI,Philippines
+PRT,POR,Portugal
+PRI,PUR,Puerto Rico
+ZAF,RSA,South Africa
+WSM,SAM,Samoa
+SYC,SEY,Seychelles
+KNA,SKN,Saint Kitts and Nevis
+SVN,SLO,Slovenia
+SLB,SOL,Solomon Islands
+LKA,SRI,Sri Lanka
+SDN,SUD,Sudan
+CHE,SUI,Switzerland
+TZA,TAN,Tanzania
+TON,TGA,Tonga
+TGO,TOG,Togo
+ARE,UAE,UAE
+URY,URU,Uruguay
+VUT,VAN,Vanuatu
+VNM,VIE,Vietnam
+VCT,VIN,Saint Vincent and Grenadines
+ZMB,ZAM,Zambia
+ZWE,ZIM,Zimbabwe
