@@ -21,6 +21,11 @@ hosts <- read_csv("olympic_hosts.csv")
 medals <- read_csv("olympic_medals.csv")
 
 results <- read_csv("olympic_results.csv")
+results$country_3_letter_code[results$country_3_letter_code == 'ROC'] <- 'RUS'
+results$country_3_letter_code[results$country_3_letter_code == 'OAR'] <- 'RUS'
+results$country_3_letter_code[results$country_3_letter_code == 'EUN'] <- 'URS'
+results$country_3_letter_code[results$country_3_letter_code == 'FRG'] <- 'GER'
+results$country_3_letter_code[results$country_3_letter_code == 'GDR'] <- 'GER'
 results$medal_type <- fct_relevel(as.factor(results$medal_type), c('GOLD','SILVER', 'BRONZE'))
 
 # summarize medal counts by country
@@ -54,7 +59,7 @@ ggplot(medals_by_country[1:30,], aes(reorder(country_3_letter_code, -total), cou
 medals_by_country_attendance <- medals_by_country %>%
   arrange(desc(total_per_attendance))
 
-ggplot(medals_by_country_attendance[c(1:15, 22:36),], aes(reorder(country_3_letter_code, -total_per_attendance), medals_per_attendance, fill = medal_type)) +
+ggplot(medals_by_country_attendance[1:30,], aes(reorder(country_3_letter_code, -total_per_attendance), medals_per_attendance, fill = medal_type)) +
   geom_bar( stat='identity') +
   scale_fill_manual("legend", values = c("GOLD" = "gold2", "SILVER" = "gray", "BRONZE" = "brown")) +
   geom_text(aes(label = signif(medals_per_attendance, digits = 3)), size = 3, position = position_stack(vjust = 0.5)) +
@@ -163,10 +168,47 @@ ggplot(medals_by_country_event_total, aes(log(competed_in), log(total), label = 
   scale_color_manual("legend", values = c("summer" = "red", "winter" = "blue"))
 dev.off()
 
-ggplot(medals_by_country_event_total[medals_by_country_event_total$country_3_letter_code == 'CHN',]) +
-  geom_point(aes(game_year, total, color = host)) +
+ggplot(medals_by_country_event_total[medals_by_country_event_total$country_3_letter_code == 'USA',]) +
+  geom_point(aes(competed_in, total, color = host)) +
   facet_wrap(~game_season, scales = 'free') +
   scale_color_manual("legend", values = c("Y" = "green", "N" = "red"))
+
+
+# country code clean up
+gdp_per_long$code <- as.factor(gdp_per_long$code)
+gdp_tot_long$code <- as.factor(gdp_tot_long$code)
+
+gdp_per_levels <- levels(gdp_per_long$code)
+gdp_tot_levels <- levels(gdp_tot_long$code)
+
+medals_by_country_event_total$country_3_letter_code <- as.factor(medals_by_country_event_total$country_3_letter_code)
+medals_levels <- levels(medals_by_country_event_total$country_3_letter_code)
+
+setdiff(medals_levels, gdp_per_levels)
+
+gdp_per_long$code <- as.character(gdp_per_long$code)
+gdp_tot_long$code <- as.character(gdp_tot_long$code)
+
+corrections <- read_csv('corrections.csv')
+
+for (i in 1:nrow(corrections)) {
+  before <- corrections$from[i]
+  after <- corrections$to[i]
+  country <- corrections$name[i]
+  if ((before %in% gdp_per_long$code) & (after %in% medals_by_country_event_total$country_3_letter_code)) {
+    gdp_per_long$code[gdp_per_long$code == before] <- after
+    gdp_tot_long$code[gdp_tot_long$code == before] <- after
+    military$code[military$code == before] <- after
+  } else {
+    print(country)
+    print(i)
+  }
+}
+
+
+
+
+
 
 joined_for_predict <- medals_by_country_event_total %>%
   inner_join(gdp_per_long, by = c('country_3_letter_code' = 'code', 'game_year' = 'year')) %>%
@@ -194,13 +236,26 @@ ggplot(joined_for_predict, aes(competed_in, total, label = country_3_letter_code
 ggplot(joined_for_predict, aes(military_percent_gdp, total, label = country_3_letter_code, fill = game_season)) +
   geom_label()
 ggplot(joined_for_predict, aes(military_total, total, label = country_3_letter_code, fill = game_season)) +
-  geom_label()
+  geom_label() +
+  facet_wrap(~game_season, scales = 'free')
 
 joined_for_predict <- joined_for_predict %>%
   mutate(country_3_letter_code = as.factor(country_3_letter_code),
          game_year = as.factor(game_year),
          game_season = as.factor(game_season)
          )
+
+library(ggmap)
+register_google('AIzaSyBOyePqErRX7KawzZmPmamEYcAXdBGsODc')
+
+countries <- data.frame(levels(as.factor(joined_for_predict$country_name)))
+colnames(countries) <- c('name')
+
+coords <- mutate_geocode(countries, name)
+
+joined_for_predict <- joined_for_predict %>%
+  inner_join(coords, by = c('country_name' = 'name')) %>%
+  mutate(abs_lat = abs(lat))
 
 set.seed(101)
 sample <- sample.int(n = nrow(joined_for_predict), size = floor(.75*nrow(joined_for_predict)), replace = F)
