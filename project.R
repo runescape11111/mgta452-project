@@ -185,9 +185,12 @@ medals_by_country_event_total$country_3_letter_code <- as.factor(medals_by_count
 medals_levels <- levels(medals_by_country_event_total$country_3_letter_code)
 
 setdiff(medals_levels, gdp_per_levels)
+setdiff(gdp_per_levels,medals_levels)
 
 gdp_per_long$code <- as.character(gdp_per_long$code)
 gdp_tot_long$code <- as.character(gdp_tot_long$code)
+
+gdp_per_long$ISO3 <- gdp_per_long$code
 
 corrections <- read_csv('corrections.csv')
 
@@ -195,7 +198,7 @@ for (i in 1:nrow(corrections)) {
   before <- corrections$from[i]
   after <- corrections$to[i]
   country <- corrections$name[i]
-  if ((before %in% gdp_per_long$code) & (after %in% medals_by_country_event_total$country_3_letter_code)) {
+  if ((country == 'Channel Islands') | ((before %in% gdp_per_long$code) & (after %in% medals_by_country_event_total$country_3_letter_code))) {
     gdp_per_long$code[gdp_per_long$code == before] <- after
     gdp_tot_long$code[gdp_tot_long$code == before] <- after
     military$code[military$code == before] <- after
@@ -251,11 +254,18 @@ register_google('AIzaSyBOyePqErRX7KawzZmPmamEYcAXdBGsODc')
 countries <- data.frame(levels(as.factor(joined_for_predict$country_name)))
 colnames(countries) <- c('name')
 
-coords <- mutate_geocode(countries, name)
+#coords <- mutate_geocode(countries, name)
+#write_csv(coords,'coords.csv')
+coords <- read_csv('coords.csv')
 
 joined_for_predict <- joined_for_predict %>%
   inner_join(coords, by = c('country_name' = 'name')) %>%
-  mutate(abs_lat = abs(lat))
+  mutate(abs_lat = abs(lat)) %>%
+  left_join(distinct(medals_by_country[,1:2]), by = 'country_3_letter_code')
+
+joined_for_predict$ISO3[joined_for_predict$ISO3 == 'XKX'] <- 'KOS'
+names(joined_for_predict)[names(joined_for_predict) == 'total.x'] <- 'total_at_event'
+names(joined_for_predict)[names(joined_for_predict) == 'total.y'] <- 'total_all_time'
 
 set.seed(101)
 sample <- sample.int(n = nrow(joined_for_predict), size = floor(.75*nrow(joined_for_predict)), replace = F)
@@ -264,3 +274,43 @@ valid  <- joined_for_predict[-sample, ]
 
 write_csv(train,'train.csv')
 write_csv(valid,'valid.csv')
+
+install.packages('rworldmap')
+library(rworldmap)
+
+joinData <- joinCountryData2Map( joined_for_predict,
+                                 joinCode = "ISO3",
+                                 nameJoinColumn = "ISO3")
+
+theMap <- mapCountryData(joinData,
+                         nameColumnToPlot="total_all_time",
+                         addLegend=F,
+                         colourPalette='rainbow',
+                         catMethod=c(0,5,25,50,250,500,750,1000,3000),
+                         #catMethod='logFixedWidth',
+                         missingCountryCol = 'black',
+                         mapTitle = 'All Time Medals Won')
+do.call(addMapLegend, c(theMap, legendWidth=1, legendMar = 2,legendLabels = "all"))
+
+mapBubbles(joinData,
+           nameZSize="total_all_time",
+           symbolSize=2,
+           nameZColour="total_all_time",
+           catMethod=c(0,5,25,50,250,500,750,1000,3000),
+           colourPalette='rainbow',
+           borderCol='black',
+           mapRegion='europe',
+           plotZeroVals=T,
+           addLegend=F)
+mapBubbles(joinData,
+           nameZSize="total_all_time",
+           symbolSize=2,
+           nameZColour="total_all_time",
+           catMethod=c(0,5,25,50,250,500,750,1000,3000),
+           colourPalette='rainbow',
+           borderCol='black',
+           mapRegion='asia',
+           plotZeroVals=T,
+           lwd=1,
+           addLegend=F)
+labelCountries(joinData, nameCountryColumn = "ISO3", col = "black", cex = 0.8, pos=4)
