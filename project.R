@@ -282,15 +282,19 @@ joinData <- joinCountryData2Map( joined_for_predict,
                                  joinCode = "ISO3",
                                  nameJoinColumn = "ISO3")
 
+png(filename="world_map_all_time.png", width=5000, height=2500)
 theMap <- mapCountryData(joinData,
                          nameColumnToPlot="total_all_time",
                          addLegend=F,
                          colourPalette='rainbow',
                          catMethod=c(0,5,25,50,250,500,750,1000,3000),
                          #catMethod='logFixedWidth',
-                         missingCountryCol = 'black',
+                         missingCountryCol = 'grey',
+                         borderCol='black',
                          mapTitle = 'All Time Medals Won')
 do.call(addMapLegend, c(theMap, legendWidth=1, legendMar = 2,legendLabels = "all"))
+labelCountries(joinData, nameCountryColumn = "total_all_time", col = "black", cex = 1)
+dev.off()
 
 mapBubbles(joinData,
            nameZSize="total_all_time",
@@ -302,15 +306,19 @@ mapBubbles(joinData,
            mapRegion='europe',
            plotZeroVals=T,
            addLegend=F)
+
 mapBubbles(joinData,
            nameZSize="total_all_time",
-           symbolSize=2,
+           symbolSize=5,
            nameZColour="total_all_time",
            catMethod=c(0,5,25,50,250,500,750,1000,3000),
-           colourPalette='rainbow',
-           borderCol='black',
+           colourPalette=adjustcolor(palette(), alpha.f = 0.5),
+           borderCol='grey',
            mapRegion='asia',
            plotZeroVals=T,
            lwd=1,
-           addLegend=F)
-labelCountries(joinData, nameCountryColumn = "ISO3", col = "black", cex = 0.8, pos=4)
+           addLegend=F,
+           addColourLegend=T,
+           colourLegendPos='bottomright',
+           colourLegendTitle='Medal Count')
+labelCountries(joinData, nameCountryColumn = "total_all_time", col = "black", cex = 1)
