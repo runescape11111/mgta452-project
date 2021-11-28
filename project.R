@@ -45,29 +45,52 @@ medals_by_country <- results[complete.cases(results$medal_type),] %>%
   
 medals_by_country
 
-ggplot(medals_by_country[1:30,], aes(reorder(country_3_letter_code, -total), count_by_medal, fill = medal_type)) +
+gg_medals_by_country <- ggplot(medals_by_country[1:30,], aes(reorder(country_3_letter_code, -total), count_by_medal, fill = medal_type)) +
   geom_bar( stat='identity') +
-  scale_fill_manual("legend", values = c("GOLD" = "gold2", "SILVER" = "gray", "BRONZE" = "brown")) +
+  scale_fill_manual("Medals", values = c("GOLD" = "gold2", "SILVER" = "gray", "BRONZE" = "#CC6600")) +
   geom_text(aes(label = signif(count_by_medal, digits = 3)), size = 3, position = position_stack(vjust = 0.5)) +
   geom_text(aes(country_3_letter_code,
                 signif(total, digits = 3),
                 label = signif(total, digits = 3),
                 vjust = -0.25,
-                group = country_3_letter_code))
+                group = country_3_letter_code)) +
+  ggtitle("Medal Count for Top 10 Countries") +
+  xlab("Countries") +
+  ylab("Medal Count") +
+  theme_minimal() 
 
+gg_medals_by_country + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
+                             axis.text.x = element_text(angle=50, size=10, vjust=0.5),
+                             axis.ticks.y = element_blank(),
+                             axis.text.y = element_blank(),
+                             panel.grid.major = element_blank(),
+                             panel.grid.minor = element_blank())
+
+ 
 # plotting for medal counts per attendance
 medals_by_country_attendance <- medals_by_country %>%
   arrange(desc(total_per_attendance))
 
-ggplot(medals_by_country_attendance[1:30,], aes(reorder(country_3_letter_code, -total_per_attendance), medals_per_attendance, fill = medal_type)) +
+gg_medals_by_country_attendance <- ggplot(medals_by_country_attendance[1:30,], aes(reorder(country_3_letter_code, -total_per_attendance), medals_per_attendance, fill = medal_type)) +
   geom_bar( stat='identity') +
-  scale_fill_manual("legend", values = c("GOLD" = "gold2", "SILVER" = "gray", "BRONZE" = "brown")) +
+  scale_fill_manual("Medals", values = c("GOLD" = "gold2", "SILVER" = "gray", "BRONZE" = "#CC6600")) +
   geom_text(aes(label = signif(medals_per_attendance, digits = 3)), size = 3, position = position_stack(vjust = 0.5)) +
   geom_text(aes(country_3_letter_code,
                 signif(total_per_attendance, digits = 3),
                 label = signif(total_per_attendance, digits = 3),
                 vjust = -0.25,
-                group = country_3_letter_code))
+                group = country_3_letter_code)) +
+  ggtitle("Medal Count for Top 10 Countries by Attendance") +
+  xlab("Countries") +
+  ylab("Medal Count") +
+  theme_minimal() 
+
+gg_medals_by_country_attendance + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
+                             axis.text.x = element_text(angle=50, size=10, vjust=0.5),
+                             axis.ticks.y = element_blank(),
+                             axis.text.y = element_blank(),
+                             panel.grid.major = element_blank(),
+                             panel.grid.minor = element_blank())
 
 # gdp clean up
 gdp_per <- read_csv("GDP_per_capita.csv")
@@ -154,25 +177,40 @@ medals_by_country_event_total <- medals_by_country_event %>%
   distinct()
 
 # plot for participation vs won titles
+#needs to be updated
 png(filename="participation_vs_won.png", width=5000, height=5000)
-ggplot(medals_by_country_event_total, aes(competed_in, total, label = country_3_letter_code, color = game_season)) +
+gg_medals_by_country_event_total <- ggplot(medals_by_country_event_total, aes(competed_in, total, label = country_3_letter_code, color = game_season)) +
   geom_label(aes(size = 10)) +
   facet_wrap(~game_year + game_season, scales = 'free') +
-  scale_color_manual("legend", values = c("Summer" = "red", "Winter" = "blue"))
+  scale_color_manual("legend", values = c("Summer" = "red", "Winter" = "blue")) +
+  ggtitle(" ") +
+  xlab(" ") +
+  ylab("Total Medals")
+gg_medals_by_country_event_total# + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
+                              #legend.key=element_rect(fill = NA))
 dev.off()
 
+#needs to be updated
 png(filename="participation_vs_log_won.png", width=5000, height=5000)
-ggplot(medals_by_country_event_total, aes(log(competed_in), log(total), label = country_3_letter_code, color = season)) +
+gg_log_medals_by_country_event_total <- ggplot(medals_by_country_event_total, aes(log(competed_in), log(total), label = country_3_letter_code, color = game_season)) +
   geom_label(aes(size = 10)) +
   facet_wrap(~game_year, scales = 'free') +
-  scale_color_manual("legend", values = c("summer" = "red", "winter" = "blue"))
+  scale_color_manual("legend", values = c("summer" = "red", "winter" = "blue")) +
+  ggtitle(" ") +
+  xlab(" ") +
+  ylab("Total Medals")
+gg_log_medals_by_country_event_total
 dev.off()
 
-ggplot(medals_by_country_event_total[medals_by_country_event_total$country_3_letter_code == 'USA',]) +
+#needs to be updated
+gg_medals_by_country_event_total_USA <- ggplot(medals_by_country_event_total[medals_by_country_event_total$country_3_letter_code == 'USA',]) +
   geom_point(aes(competed_in, total, color = host)) +
   facet_wrap(~game_season, scales = 'free') +
-  scale_color_manual("legend", values = c("Y" = "green", "N" = "red"))
-
+  scale_color_manual("legend", values = c("Y" = "green", "N" = "red")) +
+  ggtitle(" ") +
+  xlab(" ") +
+  ylab("Total Medals")
+gg_medals_by_country_event_total_USA
 
 # country code clean up
 gdp_per_long$code <- as.factor(gdp_per_long$code)
@@ -224,23 +262,73 @@ joined_for_predict <- medals_by_country_event_total %>%
 
 check <- joined_for_predict[joined_for_predict$country_name != joined_for_predict$name,]
 
-ggplot(joined_for_predict, aes(gdp_per_capita, total, label = country_3_letter_code)) +
-  geom_label()
-ggplot(joined_for_predict, aes(log10(gdp_total), total, label = country_3_letter_code, fill = game_season, alpha = 0.2)) +
+gg_total_medals_per_capita <- ggplot(joined_for_predict, aes(gdp_per_capita, total, label = country_3_letter_code)) +
+  geom_label() +
+  ggtitle("Total Medals Won by GDP per Capita") +
+  xlab("GDP per Capita") +
+  ylab("Total Medals")
+gg_total_medals_per_capita + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
+                                   panel.grid.major = element_blank(),
+                                   panel.grid.minor = element_blank())
+
+gg_log_total_medals_total_gdp <- ggplot(joined_for_predict, aes(log10(gdp_total), total, label = country_3_letter_code, fill = game_season, alpha = 0.2)) +
   geom_label(label.r = unit(0.5, "lines")) +
-  facet_wrap(~game_season, scales = 'free')
-ggplot(joined_for_predict, aes(population, total, label = country_3_letter_code)) +
-  geom_label()
+  facet_wrap(~game_season, scales = 'free') +
+  ggtitle("Total Medals Won by Log Total GDP") +
+  ylab("Total Medals") + 
+  xlab("Log Total GDP")
+gg_log_total_medals_total_gdp + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
+                                    panel.grid.major = element_blank(),
+                                    panel.grid.minor = element_blank()) +
+  labs(fill = "Season")
+
+gg_total_medals_pop <- ggplot(joined_for_predict, aes(population, total, label = country_3_letter_code)) +
+  geom_label() +
+  ggtitle("Total Medals by Country Population") +
+  xlab("Country Population") +
+  ylab("Total Medals")
+gg_total_medals_pop + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
+                            panel.grid.major = element_blank(),
+                            panel.grid.minor = element_blank())
+
+#needs to be updated
 ggplot(joined_for_predict, aes(total, label = country_3_letter_code, fill = game_season)) +
   geom_bar() +
-  facet_wrap(~host, scales = 'free')
-ggplot(joined_for_predict, aes(competed_in, total, label = country_3_letter_code, fill = game_season)) +
-  geom_label()
-ggplot(joined_for_predict, aes(military_percent_gdp, total, label = country_3_letter_code, fill = game_season)) +
-  geom_label()
-ggplot(joined_for_predict, aes(military_total, total, label = country_3_letter_code, fill = game_season)) +
+  facet_wrap(~host, scales = 'free') 
+
+#needs to be updated (title)
+gg_competed_total_medals <- ggplot(joined_for_predict, aes(competed_in, total, label = country_3_letter_code, fill = game_season)) +
   geom_label() +
-  facet_wrap(~game_season, scales = 'free')
+  ggtitle("Total Medals Won by Competed In") +
+  xlab("Competed In") +
+  ylab("Total Medals")
+gg_competed_total_medals + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
+                                 panel.grid.major = element_blank(),
+                                 panel.grid.minor = element_blank()) +
+  labs(fill = "Season")
+
+
+gg_military_total_medals <- ggplot(joined_for_predict, aes(military_percent_gdp, total, label = country_3_letter_code, fill = game_season)) +
+  geom_label() +
+  ggtitle("Total Medals Won by Military Percent of GDP") +
+  xlab("Military Percent of GDP") +
+  ylab("Total Medals")
+gg_military_total_medals + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
+                                 panel.grid.major = element_blank(),
+                                 panel.grid.minor = element_blank()) +
+  labs(fill = "Season")
+
+#needs to be updated (title, xlab)
+gg_total_military_total_medals <- ggplot(joined_for_predict, aes(military_total, total, label = country_3_letter_code, fill = game_season)) +
+  geom_label() +
+  facet_wrap(~game_season, scales = 'free') +
+  ggtitle("Total Medals Won by Total Military") +
+  xlab("Total Military") +
+  ylab("Total Medals")
+gg_total_military_total_medals + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
+                                 panel.grid.major = element_blank(),
+                                 panel.grid.minor = element_blank()) +
+  labs(fill = "Season")
 
 joined_for_predict <- joined_for_predict %>%
   mutate(country_3_letter_code = as.factor(country_3_letter_code),
