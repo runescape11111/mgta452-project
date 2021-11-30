@@ -194,8 +194,8 @@ dev.off()
 png(filename="participation_vs_log_won.png", width=5000, height=5000)
 gg_log_medals_by_country_event_total <- ggplot(medals_by_country_event_total, aes(log(competed_in), log(total), label = country_3_letter_code, color = game_season)) +
   geom_label(aes(size = 10)) +
-  facet_wrap(~game_year, scales = 'free') +
-  scale_color_manual("legend", values = c("summer" = "red", "winter" = "blue")) +
+  facet_wrap(~game_year + game_season, scales = 'free') +
+  scale_color_manual("legend", values = c("Summer" = "red", "Winter" = "blue")) +
   ggtitle(" ") +
   xlab(" ") +
   ylab("Total Medals")
@@ -282,7 +282,7 @@ gg_log_total_medals_total_gdp + theme(plot.title = element_text(size = 15, lineh
                                     panel.grid.minor = element_blank()) +
   labs(fill = "Season")
 
-gg_total_medals_pop <- ggplot(joined_for_predict, aes(population, total, label = country_3_letter_code)) +
+gg_total_medals_pop <- ggplot(joined_for_predict, aes(log(population), total, label = country_3_letter_code)) +
   geom_label() +
   ggtitle("Total Medals by Country Population") +
   xlab("Country Population") +
@@ -355,6 +355,13 @@ joined_for_predict$ISO3[joined_for_predict$ISO3 == 'XKX'] <- 'KOS'
 names(joined_for_predict)[names(joined_for_predict) == 'total.x'] <- 'total_at_event'
 names(joined_for_predict)[names(joined_for_predict) == 'total.y'] <- 'total_all_time'
 
+joined_for_predict <- joined_for_predict %>%
+  mutate(gdp_ln = log(gdp_total)) %>%
+  group_by(slug_game) %>%
+  mutate(part_norm = competed_in / sum(competed_in))
+
+joined_for_predict$total_at_event_sqrt <- sqrt(joined_for_predict$total_at_event)
+
 set.seed(101)
 sample <- sample.int(n = nrow(joined_for_predict), size = floor(.75*nrow(joined_for_predict)), replace = F)
 train <- joined_for_predict[sample, ]
@@ -374,14 +381,17 @@ png(filename="world_map_all_time.png", width=5000, height=2500)
 theMap <- mapCountryData(joinData,
                          nameColumnToPlot="total_all_time",
                          addLegend=F,
-                         colourPalette='rainbow',
+                         colourPalette='heat',
                          catMethod=c(0,5,25,50,250,500,750,1000,3000),
                          #catMethod='logFixedWidth',
                          missingCountryCol = 'grey',
+                         xlim=c(-80,-20),
+                         ylim=c(0,60),
+                         #mapRegion='africa',
                          borderCol='black',
                          mapTitle = 'All Time Medals Won')
 do.call(addMapLegend, c(theMap, legendWidth=1, legendMar = 2,legendLabels = "all"))
-labelCountries(joinData, nameCountryColumn = "total_all_time", col = "black", cex = 1)
+labelCountries(joinData, nameCountryColumn = "total_all_time", col = "black", cex = 0.8)
 dev.off()
 
 mapBubbles(joinData,
@@ -402,11 +412,13 @@ mapBubbles(joinData,
            catMethod=c(0,5,25,50,250,500,750,1000,3000),
            colourPalette=adjustcolor(palette(), alpha.f = 0.5),
            borderCol='grey',
-           mapRegion='asia',
+           xlim=c(80,140),
+           ylim=c(-30,30),
+           #mapRegion='europe',
            plotZeroVals=T,
            lwd=1,
            addLegend=F,
            addColourLegend=T,
            colourLegendPos='bottomright',
            colourLegendTitle='Medal Count')
-labelCountries(joinData, nameCountryColumn = "total_all_time", col = "black", cex = 1)
+labelCountries(joinData, nameCountryColumn = "total_all_time", col = "black", cex = sqrt(joinData$total_all_time) / 20)
