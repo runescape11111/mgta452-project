@@ -177,40 +177,29 @@ medals_by_country_event_total <- medals_by_country_event %>%
   distinct()
 
 # plot for participation vs won titles
-#needs to be updated
 png(filename="participation_vs_won.png", width=5000, height=5000)
-gg_medals_by_country_event_total <- ggplot(medals_by_country_event_total, aes(competed_in, total, label = country_3_letter_code, color = game_season)) +
+ggplot(medals_by_country_event_total, aes(competed_in, total, label = country_3_letter_code, color = game_season)) +
   geom_label(aes(size = 10)) +
   facet_wrap(~game_year + game_season, scales = 'free') +
-  scale_color_manual("legend", values = c("Summer" = "red", "Winter" = "blue")) +
-  ggtitle(" ") +
-  xlab(" ") +
-  ylab("Total Medals")
-gg_medals_by_country_event_total# + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
-                              #legend.key=element_rect(fill = NA))
+  scale_color_manual("legend", values = c("Summer" = "red", "Winter" = "blue"))
 dev.off()
 
-#needs to be updated
 png(filename="participation_vs_log_won.png", width=5000, height=5000)
-gg_log_medals_by_country_event_total <- ggplot(medals_by_country_event_total, aes(log(competed_in), log(total), label = country_3_letter_code, color = game_season)) +
+ggplot(medals_by_country_event_total, aes(log(competed_in), log(total), label = country_3_letter_code, color = game_season)) +
   geom_label(aes(size = 10)) +
   facet_wrap(~game_year + game_season, scales = 'free') +
-  scale_color_manual("legend", values = c("Summer" = "red", "Winter" = "blue")) +
-  ggtitle(" ") +
-  xlab(" ") +
-  ylab("Total Medals")
-gg_log_medals_by_country_event_total
+  scale_color_manual("legend", values = c("Summer" = "red", "Winter" = "blue"))
 dev.off()
 
-#needs to be updated
 gg_medals_by_country_event_total_USA <- ggplot(medals_by_country_event_total[medals_by_country_event_total$country_3_letter_code == 'USA',]) +
   geom_point(aes(competed_in, total, color = host)) +
   facet_wrap(~game_season, scales = 'free') +
-  scale_color_manual("legend", values = c("Y" = "green", "N" = "red")) +
-  ggtitle(" ") +
-  xlab(" ") +
+  scale_color_manual("Legend", values = c("Y" = "green", "N" = "red")) +
+  ggtitle("Total Medals for Competing Nations") +
+  xlab("Competed In") +
   ylab("Total Medals")
-gg_medals_by_country_event_total_USA
+gg_medals_by_country_event_total_USA + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
+                                             panel.grid.major = element_blank())
 
 # country code clean up
 gdp_per_long$code <- as.factor(gdp_per_long$code)
@@ -299,7 +288,7 @@ ggplot(joined_for_predict, aes(total, label = country_3_letter_code, fill = game
 #needs to be updated (title)
 gg_competed_total_medals <- ggplot(joined_for_predict, aes(competed_in, total, label = country_3_letter_code, fill = game_season)) +
   geom_label() +
-  ggtitle("Total Medals Won by Competed In") +
+  ggtitle("Total Medals Won in Different Seasons") +
   xlab("Competed In") +
   ylab("Total Medals")
 gg_competed_total_medals + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
@@ -310,20 +299,19 @@ gg_competed_total_medals + theme(plot.title = element_text(size = 15, lineheight
 
 gg_military_total_medals <- ggplot(joined_for_predict, aes(military_percent_gdp, total, label = country_3_letter_code, fill = game_season)) +
   geom_label() +
-  ggtitle("Total Medals Won by Military Percent of GDP") +
-  xlab("Military Percent of GDP") +
+  ggtitle("Total Medals Won by Military Spending Percentage of GDP") +
+  xlab("Military Percentage of GDP") +
   ylab("Total Medals")
 gg_military_total_medals + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
                                  panel.grid.major = element_blank(),
                                  panel.grid.minor = element_blank()) +
   labs(fill = "Season")
 
-#needs to be updated (title, xlab)
 gg_total_military_total_medals <- ggplot(joined_for_predict, aes(military_total, total, label = country_3_letter_code, fill = game_season)) +
   geom_label() +
   facet_wrap(~game_season, scales = 'free') +
-  ggtitle("Total Medals Won by Total Military") +
-  xlab("Total Military") +
+  ggtitle("Total Medals Won by Total Military Spending") +
+  xlab("Total Military Spending") +
   ylab("Total Medals")
 gg_total_military_total_medals + theme(plot.title = element_text(size = 15, lineheight = 0.8, hjust = 0.5, face = "bold"), 
                                  panel.grid.major = element_blank(),
@@ -372,6 +360,7 @@ write_csv(valid,'valid.csv')
 
 install.packages('rworldmap')
 library(rworldmap)
+library(RColorBrewer)
 
 joinData <- joinCountryData2Map( joined_for_predict,
                                  joinCode = "ISO3",
@@ -381,7 +370,8 @@ png(filename="world_map_all_time.png", width=5000, height=2500)
 theMap <- mapCountryData(joinData,
                          nameColumnToPlot="total_all_time",
                          addLegend=F,
-                         colourPalette='heat',
+                         colourPalette=brewer.pal(9,"Set3"),#'palette',
+                         #Paired, Set3, Pastel1
                          catMethod=c(0,5,25,50,250,500,750,1000,3000),
                          #catMethod='logFixedWidth',
                          missingCountryCol = 'grey',
@@ -399,7 +389,7 @@ mapBubbles(joinData,
            symbolSize=2,
            nameZColour="total_all_time",
            catMethod=c(0,5,25,50,250,500,750,1000,3000),
-           colourPalette='rainbow',
+           colourPalette='rainbow',#brewer.pal(9,"Set3"),
            borderCol='black',
            mapRegion='europe',
            plotZeroVals=T,
