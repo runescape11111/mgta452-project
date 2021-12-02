@@ -361,6 +361,8 @@ write_csv(valid,'valid.csv')
 install.packages('rworldmap')
 library(rworldmap)
 library(RColorBrewer)
+install.packages('GISTools')
+library(GISTools)
 
 joinData <- joinCountryData2Map( joined_for_predict,
                                  joinCode = "ISO3",
@@ -389,26 +391,33 @@ mapBubbles(joinData,
            symbolSize=2,
            nameZColour="total_all_time",
            catMethod=c(0,5,25,50,250,500,750,1000,3000),
-           colourPalette='rainbow',#brewer.pal(9,"Set3"),
+           colourPalette=add.alpha(brewer.pal(5,'Spectral'),0.8),
            borderCol='black',
            mapRegion='europe',
            plotZeroVals=T,
            addLegend=F)
+labelCountries(joinData, nameCountryColumn = "total_all_time", col = "black", cex = 0.8)
 
+png(filename="total_all_time.png", width=1000, height=800)
 mapBubbles(joinData,
            nameZSize="total_all_time",
-           symbolSize=5,
+           symbolSize=20,
            nameZColour="total_all_time",
            catMethod=c(0,5,25,50,250,500,750,1000,3000),
-           colourPalette=adjustcolor(palette(), alpha.f = 0.5),
+           colourPalette=add.alpha(brewer.pal(5,'BrBG'),0.8),
            borderCol='grey',
            xlim=c(80,140),
-           ylim=c(-30,30),
+           ylim=c(-50,50),
            #mapRegion='europe',
            plotZeroVals=T,
            lwd=1,
            addLegend=F,
            addColourLegend=T,
-           colourLegendPos='bottomright',
-           colourLegendTitle='Medal Count')
+           colourLegendPos='topright',
+           colourLegendTitle='Medal Count',
+           landCol = "dark gray")
+labelCountries(joinData, nameCountryColumn = "total_all_time", col = "black", cex = sqrt(joinData$total_all_time)/3)
+dev.off()
+
+
 labelCountries(joinData, nameCountryColumn = "total_all_time", col = "black", cex = sqrt(joinData$total_all_time) / 20)
